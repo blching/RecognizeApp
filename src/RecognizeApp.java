@@ -1,6 +1,6 @@
 import java.sql.*;
 import java.util.Scanner;
-
+import java.util.Properties;
 
 public class RecognizeApp {
     public static Connection conn = null;
@@ -17,6 +17,17 @@ public class RecognizeApp {
                 "jdbc:mysql://localhost/test?" +
                 "user=root&password=root");
             stmt = conn.createStatement();
+
+             System.out.println("Here are our five recent honor recipents:");
+
+            rs = stmt.executeQuery("SELECT * FROM recentrecipents");
+
+            while (rs.next()) {
+                String fName = rs.getString("fName");
+                String lName = rs.getString("fName");
+
+                System.out.println(fName + " " + lName);
+            }
         } catch (SQLException ex) {
             // handle any errors
             System.out.println("SQLException: " + ex.getMessage());
@@ -26,14 +37,9 @@ public class RecognizeApp {
     }
 
     static void mainStep() throws SQLException {
-        System.out.println("Here are our Honor recipents:");
+        System.out.println("What do you want to do?");
 
-        rs = stmt.executeQuery("SELECT * FROM recipents");
-
-        while (rs.next()) {
-            String name = rs.getString("name");
-            System.out.println(name);
-        }
+        
     }
 
     public static void main(String[] args) {
