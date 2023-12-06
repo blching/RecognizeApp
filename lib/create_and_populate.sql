@@ -1,4 +1,7 @@
---source /Users/brandonching/Desktop/School/CS157a/RecognizeApp/RecognizeApp/lib/create_and_populate.sql;
+-- /usr/local/mysql/bin/mysql -u root -p
+-- source /Users/brandonching/Desktop/School/CS157a/RecognizeApp/RecognizeApp/lib/create_and_populate.sql;
+-- UPDATE RECIPIENTS SET honorLevel = 10 where fName = 'Karina';
+
 CREATE TABLE RECIPIENTS (
     fName varchar(20),
     lName varchar(20),
@@ -9,7 +12,8 @@ CREATE TABLE RECIPIENTS (
 CREATE TABLE RECENTRECIPIENTS (
     fName varchar(20),
     lName varchar(20),
-    id int
+    id int,
+    stackId int
 );
 
 CREATE TABLE GIFTS (
@@ -19,7 +23,7 @@ CREATE TABLE GIFTS (
     price int
 );
 
-INSERT INTO RECIPIENTS(fName, lName, id, honorLevel)
+INSERT INTO RECIPIENTS(fName, lName, id, honorLevel) 
     VALUES
     ("Kevin", "Ngyuen", 1, 0),
     ("Daniel", "Kim", 2, 0),
@@ -30,17 +34,22 @@ INSERT INTO RECIPIENTS(fName, lName, id, honorLevel)
     ("Robert", "Smith", 77, 0),
     ("Karina", "Yoo", 65, 0);
 
-INSERT INTO RECENTRECIPIENTS(fName, lName, id)
+INSERT INTO RECENTRECIPIENTS(fName, lName, id, stackId)
     VALUES
-    ("Kevin", "Ngyuen", 1),
-    ("Daniel", "Kim", 2),
-    ("Pedro", "Pascal", 10),
-    ("Faker", "Lee", 7),
-    ("Stephen", "Curry", 30);
+    ("Kevin", "Ngyuen", 1, 1),
+    ("Daniel", "Kim", 2, 2),
+    ("Pedro", "Pascal", 10, 3),
+    ("Faker", "Lee", 7, 4),
+    ("Stephen", "Curry", 30, 5);
 
+DELIMITER //
 CREATE TRIGGER honorLevelUpdate AFTER UPDATE ON RECIPIENTS
     FOR EACH ROW
-    INSERT INTO RECENTRECIPIENTS (fName, lName, id)
-    VALUES (NEW.fName, NEW.lName, NEW.id);
-    DELETE FROM RECENTRECIPIENTS where id IN (select * FROM RECENTRECIPIENTS LIMIT 1);
+    BEGIN
+    INSERT INTO RECENTRECIPIENTS (fName, lName, id, stackId)
+    VALUES (NEW.fName, NEW.lName, NEW.id, 6);
 
+    UPDATE RECENTRECIPIENTS SET stackId = stackId - 1;
+    DELETE FROM RECENTRECIPIENTS where stackId = 0; 
+    END //
+DELIMITER ;
