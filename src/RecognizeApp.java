@@ -9,6 +9,7 @@ public class RecognizeApp {
     static Scanner scan;
 
 
+
     static void intitalize() {
         /*
             java -cp .:/Users/brandonching/Desktop/School/CS157a/mysql-connector-j-8.2.0.jar RecognizeApp
@@ -18,14 +19,15 @@ public class RecognizeApp {
         System.out.println("Welcome to Honor World!");
         scan = new Scanner(System.in);
         try {
-            conn = DriverManager.getConnection(
+            /* conn = DriverManager.getConnection(
                 "jdbc:mysql://localhost/test?" +
                 "user=root&password=root");
-            stmt = conn.createStatement();
+            stmt = conn.createStatement(); */
 
-             System.out.println("Here are our five recent honor recipents:");
+            System.out.println("Here are our five recent honor recipents:");
 
-            rs = stmt.executeQuery("SELECT * FROM RECENTRECIPIENTS");
+            //rs = stmt.executeQuery("SELECT * FROM RECENTRECIPIENTS");
+            openSQL("SELECT * FROM RECENTRECIPIENTS");
 
             int i = 0;
             while (rs.next()) {
@@ -40,8 +42,44 @@ public class RecognizeApp {
             System.out.println("SQLException: " + ex.getMessage());
             System.out.println("SQLState: " + ex.getSQLState());
             System.out.println("VendorError: " + ex.getErrorCode());
+        } finally {
+            closeSQL();
         }
     }
+
+    static void openSQL(String command) {
+            try {
+                conn = DriverManager.getConnection(
+                    "jdbc:mysql://localhost/test?" +
+                    "user=root&password=root");
+
+                stmt = conn.createStatement();
+                rs = stmt.executeQuery(command);
+
+            } catch (SQLException ex) {
+                // TODO Auto-generated catch block
+                System.out.println("SQLException: " + ex.getMessage());
+                System.out.println("SQLState: " + ex.getSQLState());
+                System.out.println("VendorError: " + ex.getErrorCode());
+            }
+    }
+
+    static void closeSQL() {
+            if (rs != null) {
+                /* try {
+                    rs.close();
+                } catch (SQLException sqlEx) { } // ignore */
+                rs = null; 
+
+            }
+            if (stmt != null) {
+                /* try {
+                    stmt.close();
+                } catch (SQLException sqlEx) { } // ignore */
+                stmt = null;
+            }
+        }
+    
 
     static void honor() {
         System.out.println("--------------");
@@ -60,18 +98,32 @@ public class RecognizeApp {
         //System.out.println("SELECT honorLevel FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
         try {
             int honorLvl = 0;
+            openSQL("SELECT * FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
+            //rs = stmt.executeQuery("SELECT * FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
+
             while (rs.next()) {
-                rs = stmt.executeQuery("SELECT * FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
                 honorLvl = rs.getInt("honorLevel");
                 honorLvl++;
-                System.out.println("New Honor Level: " + honorLvl);
                 stmt.executeUpdate("UPDATE RECIPIENTS SET honorLevel = '" + honorLvl + "' WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
             }
 
         } catch (SQLException ex) {
-            System.out.println("SQLException: " + ex.getMessage());
-            System.out.println("SQLState: " + ex.getSQLState());
-            System.out.println("VendorError: " + ex.getErrorCode());        
+            //System.out.println("SQLException: " + ex.getMessage());
+            //System.out.println("SQLState: " + ex.getSQLState());
+            //System.out.println("VendorError: " + ex.getErrorCode());        
+        } finally {
+            closeSQL();
+        }
+
+        openSQL("SELECT honorLevel FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
+        try {
+            while (rs.next()) {
+                System.out.println("New Honor Level of: " + rs.getInt("honorLevel"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeSQL();
         }
 
         mainStep();
@@ -83,6 +135,35 @@ public class RecognizeApp {
     }
 
     static void checkHonor() {
+        System.out.println("--------------");
+        System.out.println("(Enter -Q to return to main menu)");
+        System.out.println("Please enter first name of user you want to check Honor Level");
+
+        String fName = scan.nextLine();
+
+        if (fName.equals("-q") || fName.equals("-Q")) {
+            mainStep();
+        } else {
+            System.out.println("Please enter the last name of who you want to check Honor Level");
+            String lName = scan.nextLine();
+
+            try {
+                System.out.println("SELECT honorLevel FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "'");
+
+                openSQL("SELECT honorLevel FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
+
+                while (rs.next()) {
+                    int lvl = rs.getInt("honorLevel");
+                    System.out.println(fName + " " + lName + ": " + Integer.toString(lvl));
+                }
+            } catch (SQLException e) {
+                sqlError(e);
+            } finally {
+                closeSQL();
+            }
+            mainStep();
+        }
+        
 
     }
 
@@ -116,14 +197,17 @@ public class RecognizeApp {
         if (answer == 5) checkHonor();
         if (answer == 6) checkGift();
         if (answer == 7) end();
-
+        
+        mainStep();
     }
 
     static void displayAll() {
         System.out.println("--------------");
         try {
             char[] alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-            rs = stmt.executeQuery("SELECT * FROM RECIPIENTS");
+            openSQL("SELECT * FROM RECIPIENTS");
+
+            //rs = stmt.executeQuery("SELECT * FROM RECIPIENTS");
 
             int i = 0;
             while (rs.next()) {
@@ -137,6 +221,8 @@ public class RecognizeApp {
             mainStep();
         } catch (SQLException e) {
             sqlError(e);
+        } finally {
+            closeSQL();
         }
     }
 
@@ -144,7 +230,8 @@ public class RecognizeApp {
         System.out.println("--------------");
         try {
             char[] alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-            rs = stmt.executeQuery("SELECT * FROM RECENTRECIPIENTS");
+            //rs = stmt.executeQuery("SELECT * FROM RECENTRECIPIENTS");
+            openSQL("SELECT * FROM RECENTRECIPIENTS");
 
             int i = 0;
             while (rs.next()) {
@@ -158,11 +245,14 @@ public class RecognizeApp {
             mainStep();
         } catch (SQLException e) {
             sqlError(e);
+        } finally {
+            closeSQL();
         }
     }
 
     static void end() {
         System.out.println("See you soon!");
+        System.exit(0);
     }
 
     static void sqlError(SQLException ex) {
@@ -170,14 +260,12 @@ public class RecognizeApp {
         System.out.println("SQLState: " + ex.getSQLState());
         System.out.println("VendorError: " + ex.getErrorCode());
     }
+
     public static void main(String[] args) {
         //Print Welcome statement & initilize connection to sql databse
         intitalize();
 
         mainStep();
-
-        
-
     
     }
 }
