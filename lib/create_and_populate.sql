@@ -17,8 +17,8 @@ CREATE TABLE RECENTRECIPIENTS (
 );
 
 CREATE TABLE GIFTS (
-    gifter varChar(40),
-    reciever varChar(40),
+    gifterID int,
+    recieverID int,
     description varChar(100),
     price int
 );

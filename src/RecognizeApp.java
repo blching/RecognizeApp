@@ -1,7 +1,9 @@
 import java.sql.*;
 import java.util.Scanner;
 import java.util.Properties;
-
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.IOException;
 public class RecognizeApp {
     public static Connection conn = null;
     public static ResultSet rs = null;
@@ -10,7 +12,7 @@ public class RecognizeApp {
 
     public String userFName = "User";
     public String userLName = "Admin";
-    public int userID = 0;
+    public static int userID = 0;
 
     static void intitalize() {
         /*
@@ -50,10 +52,31 @@ public class RecognizeApp {
     }
 
     static void openSQL(String command) {
+        String pass = "";
+        String user = "";
+        String db = "";
+
+            try (InputStream input = new FileInputStream("app.properties")) {
+                Properties p = new Properties();
+                p.load(input);
+
+                pass = p.getProperty("db.pass");
+                user = p.getProperty("db.user");
+                db = p.getProperty("db.name");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+            System.out.println(user);
+            System.out.println(pass);
+            System.out.println(db);
+
             try {
-                conn = DriverManager.getConnection(
+                /*conn = DriverManager.getConnection(
                     "jdbc:mysql://localhost/test?" +
-                    "user=root&password=root");
+                    "user=root&password=root");*/
+                    
+                conn = DriverManager.getConnection("jdbc:mysql://localhost/" + db +"?" +
+                    "user="+user+"&password="+pass);
 
                 stmt = conn.createStatement();
                 rs = stmt.executeQuery(command);
@@ -157,9 +180,39 @@ public class RecognizeApp {
         } finally {
             closeSQL();
         }
+        mainStep();
     }
     
     static void gift() {
+        System.out.println("--------------");
+        System.out.println("Who would you like to gift? (First Name)");
+        String fName = scan.nextLine();
+
+        System.out.println("Who would you like to gift? (Last Name)");
+        String lName = scan.nextLine();
+
+        System.out.println("What is in this gift?");
+        String descrip = scan.nextLine();
+
+        System.out.println("How much does this cost?");
+        String price = scan.nextLine();
+
+        try {
+            openSQL("SELECT id FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String cmd = "INSERT INTO GIFTS(gifterID, recieverID, description, price) VALUES (\"" + userID + "\", \"" + id + "\", \"" + descrip + "\", \"" + price + "\");";
+                //System.out.println(cmd);
+                stmt.executeUpdate(cmd);
+            }
+
+        } catch (SQLException ex) {
+            //sqlError(ex);               
+        } finally {
+            closeSQL();
+        }
+
+        mainStep();
 
     }
 
@@ -197,12 +250,85 @@ public class RecognizeApp {
     }
 
     static void checkGift() {
+        System.out.println("Who would you like to check gifts? (First Name)");
+        String fName = scan.nextLine();
 
+        System.out.println("Who would you like to check gifts? (Last Name)");
+        String lName = scan.nextLine();
+
+        System.out.println("Check gifts given or recieved? (Input 0 or 1)");
+        int answer = scan.nextInt();
+        int id = -1;
+
+        if (answer == 0) {
+
+            try {
+                openSQL("SELECT * FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
+                while (rs.next()) {
+                    id = rs.getInt("id");
+                }
+
+            } catch (SQLException ex) {
+                //sqlError(ex);               
+            } finally {
+                closeSQL();
+            }
+
+            try {
+                openSQL("SELECT * FROM GIFTS WHERE gifterId = " + id + ";");
+                while (rs.next()) {
+                    String gifterID = rs.getString("gifterID");
+                    String recieverID = rs.getString("reciverID");
+                    String description = rs.getString("desc");
+                    int price = rs.getInt("price");
+
+                    System.out.println("Gifter ID: " + gifterID + " | RecieverID: " + recieverID + " | Description: " + description + " | Price = " + price);
+                }
+
+            } catch (SQLException ex) {
+                //sqlError(ex);               
+            } finally {
+                closeSQL();
+            }
+        } else {
+            try {
+                openSQL("SELECT * FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
+                while (rs.next()) {
+                    id = rs.getInt("id");
+                }
+
+            } catch (SQLException ex) {
+                //sqlError(ex);               
+            } finally {
+                closeSQL();
+            }
+
+            try {
+                openSQL("SELECT * FROM GIFTS WHERE recieverID = " + id + ";");
+
+                while (rs.next()) {
+                    String gifterID = rs.getString("gifterID");
+                    String recieverID = rs.getString("recieverID");
+                    String description = rs.getString("description");
+                    int price = rs.getInt("price");
+
+                    System.out.println("Gifter ID: " + gifterID + " | RecieverID: " + recieverID + " | Description: " + description + " | Price = " + price);
+                }
+
+            } catch (SQLException ex) {
+                sqlError(ex);               
+            } finally {
+                closeSQL();
+            }
+        }
+
+        mainStep();
     }
 
     static void mainStep() {
         System.out.println("--------------");
 
+        //Provides options for user
         Scanner scan = new Scanner(System.in);
         System.out.println("What do you want to do?");
 
@@ -218,6 +344,7 @@ public class RecognizeApp {
 
         int answer = scan.nextInt();
 
+        //Utilizes the answer to execute functions done to the system
         if (answer == 0) displayRecent();
         if (answer == 1) displayAll();
         if (answer == 2) honor();
@@ -233,7 +360,7 @@ public class RecognizeApp {
     static void displayAll() {
         System.out.println("--------------");
         try {
-            char[] alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+            char[] alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789".toCharArray();
             openSQL("SELECT * FROM RECIPIENTS");
 
             //rs = stmt.executeQuery("SELECT * FROM RECIPIENTS");
