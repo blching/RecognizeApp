@@ -8,7 +8,9 @@ public class RecognizeApp {
     public static Statement stmt = null;
     static Scanner scan;
 
-
+    public String userFName = "User";
+    public String userLName = "Admin";
+    public int userID = 0;
 
     static void intitalize() {
         /*
@@ -87,19 +89,19 @@ public class RecognizeApp {
         System.out.println("(Enter -Q to return to main menu)");
         System.out.println("Please enter the first name of who you want to Honor");
         String fName = scan.nextLine();
+        String lName = "";
 
         if (fName.equals("-q") || fName.equals("-Q")) {
             mainStep();
         } else {
             System.out.println("Please enter the last name of who you want to Honor");
+            lName = scan.nextLine();
         }
-        String lName = scan.nextLine();
         
         //System.out.println("SELECT honorLevel FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
         try {
             int honorLvl = 0;
             openSQL("SELECT * FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
-            //rs = stmt.executeQuery("SELECT * FROM RECIPIENTS WHERE fName = '" + fName + "' AND lName = '" + lName + "';");
 
             while (rs.next()) {
                 honorLvl = rs.getInt("honorLevel");
@@ -108,9 +110,7 @@ public class RecognizeApp {
             }
 
         } catch (SQLException ex) {
-            //System.out.println("SQLException: " + ex.getMessage());
-            //System.out.println("SQLState: " + ex.getSQLState());
-            //System.out.println("VendorError: " + ex.getErrorCode());        
+            //sqlError(ex);               
         } finally {
             closeSQL();
         }
@@ -130,6 +130,35 @@ public class RecognizeApp {
 
     }
 
+    static void checkMinimumHonor() {
+        System.out.println("What minimum honor do you want to check for?");
+        int min = scan.nextInt();
+
+        char[] alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+
+        try {
+            openSQL("call minLvl(" + Integer.toString(min) + ");");
+
+            int honorLevel;
+            String fName;
+            String lName;
+            int i = 0;
+
+            while (rs.next()) {
+                honorLevel = rs.getInt("honorLevel");
+                fName = rs.getString("fName");
+                lName = rs.getString("lName");
+                
+                System.out.println("(" + Character.toUpperCase(alphabet[i]) + ") " + fName + " " + lName + " | Honor Level: " + honorLevel);
+                i++;
+            }
+        } catch (SQLException e) {
+            sqlError(e);
+        } finally {
+            closeSQL();
+        }
+    }
+    
     static void gift() {
 
     }
@@ -182,8 +211,8 @@ public class RecognizeApp {
         System.out.println("(1) Display all Recipients");
         System.out.println("(2) Honor a Recipient");
         System.out.println("(3) Gift a Recipient");
-        //Remove/Edit gifts
-        System.out.println("(5) Check Honor Levels");
+        System.out.println("(4) Check Honor Levels");
+        System.out.println("(5) Check Minimum Honor Levels");
         System.out.println("(6) Check Gift");
         System.out.println("(7) Quit");
 
@@ -193,8 +222,8 @@ public class RecognizeApp {
         if (answer == 1) displayAll();
         if (answer == 2) honor();
         if (answer == 3) gift();
-        //Add Remove/edit gift
-        if (answer == 5) checkHonor();
+        if (answer == 4) checkHonor();
+        if (answer == 5) checkMinimumHonor();
         if (answer == 6) checkGift();
         if (answer == 7) end();
         

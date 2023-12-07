@@ -53,3 +53,10 @@ CREATE TRIGGER honorLevelUpdate AFTER UPDATE ON RECIPIENTS
     DELETE FROM RECENTRECIPIENTS where stackId = 0; 
     END //
 DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE minLvl(IN minLevel int)
+    BEGIN
+        SELECT * FROM RECIPIENTS WHERE honorLevel >= minLevel;
+    END //
+DELIMITER ;
